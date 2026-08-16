@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.ts": {
-      "includeFiles": ["backend/node_modules/.prisma/**", "node_modules/.prisma/**"],
+      "includeFiles": "**/.prisma/**",
       "maxDuration": 60
     }
   },
