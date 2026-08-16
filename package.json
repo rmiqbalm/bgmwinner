@@ -14,7 +14,7 @@
     "start:backend": "cd backend && npx tsx src/index.ts",
     "build": "npm run setup:backend && npm run seed && npm run build:backend && npm run build:frontend && npm run bundle:vercel",
     "build:backend": "cd backend && npm run build",
-    "bundle:vercel": "mkdir -p dist && cp -r frontend/dist/. dist/",
+    "bundle:vercel": "mkdir -p dist node_modules/.prisma/client && cp -r frontend/dist/. dist/ && cp backend/node_modules/.prisma/client/libquery_engine-*.so.node node_modules/.prisma/client/",
     "dev": "npm run setup:backend && npm run seed && npm run start:backend"
   }
 }
