@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String   @unique
+  address   String?
+  role      String   @default("MITRA") // ADMIN | STAFF | MITRA
+  password  String
+  status    String   @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products     Product[]
+  mitraLapaks  MitraLapak[]
+  deposits     DailyDeposit[]
+  leaves       Leave[]
+  payments     Payment[]
+  salesMade    SaleLog[]
+  paymentsPaid Payment[] @relation("PaymentsPaid")
+
+  @@index([role])
+}
+
+model Lapak {
+  id        Int      @id @default(autoincrement())
+  name      String
+  location  String?
+  status    String   @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt DateTime @default(now())
+
+  mitraLapaks MitraLapak[]
+  deposits    DailyDeposit[]
+  leaves      Leave[]
+}
+
+model MitraLapak {
+  id        Int      @id @default(autoincrement())
+  mitraId   Int
+  lapakId   Int
+  status    String   @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt DateTime @default(now())
+
+  mitra User  @relation(fields: [mitraId], references: [id])
+  lapak Lapak @relation(fields: [lapakId], references: [id])
+
+  @@unique([mitraId, lapakId])
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  mitraId   Int
+  name      String
+  unit      String   @default("pcs")
+  price     Int      @default(9000)
+  status    String   @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mitra User           @relation(fields: [mitraId], references: [id])
+  items DepositItem[]
+
+  @@index([mitraId])
+}
+
+model DailyDeposit {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  mitraId     Int
+  lapakId     Int
+  status      String   @default("OPEN") // OPEN | CLOSED
+  submittedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mitra    User           @relation(fields: [mitraId], references: [id])
+  lapak    Lapak          @relation(fields: [lapakId], references: [id])
+  items    DepositItem[]
+  saleLogs SaleLog[]
+
+  @@unique([mitraId, lapakId, date])
+  @@index([lapakId, date])
+}
+
+model DepositItem {
+  id           Int    @id @default(autoincrement())
+  depositId    Int
+  productId    Int
+  initialQty   Int
+  soldQty      Int    @default(0)
+  remainingQty Int
+  price        Int    @default(9000)
+  note         String?
+
+  deposit DailyDeposit @relation(fields: [depositId], references: [id], onDelete: Cascade)
+  product Product      @relation(fields: [productId], references: [id])
+
+  @@index([depositId])
+}
+
+model SaleLog {
+  id            Int      @id @default(autoincrement())
+  depositId     Int
+  depositItemId Int
+  productId     Int
+  qty           Int      @default(1)
+  soldBy        Int
+  soldAt        DateTime @default(now())
+
+  deposit DailyDeposit @relation(fields: [depositId], references: [id], onDelete: Cascade)
+  seller  User         @relation(fields: [soldBy], references: [id])
+
+  @@index([depositId])
+}
+
+model Leave {
+  id        Int      @id @default(autoincrement())
+  mitraId   Int
+  lapakId   Int
+  leaveDate DateTime
+  reason    String?
+  source    String   @default("MANUAL") // MANUAL | AUTO
+  createdAt DateTime @default(now())
+
+  mitra User  @relation(fields: [mitraId], references: [id])
+  lapak Lapak @relation(fields: [lapakId], references: [id])
+
+  @@unique([mitraId, lapakId, leaveDate])
+  @@index([lapakId, leaveDate])
+}
+
+model Payment {
+  id          Int      @id @default(autoincrement())
+  mitraId     Int
+  dateFrom    DateTime
+  dateTo      DateTime
+  totalQty    Int
+  totalAmount Int
+  status      String   @default("UNPAID") // UNPAID | PAID
+  paidAt      DateTime?
+  paidBy      Int?
+  createdAt   DateTime @default(now())
+
+  mitra User    @relation(fields: [mitraId], references: [id])
+  payer User?   @relation("PaymentsPaid", fields: [paidBy], references: [id])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
