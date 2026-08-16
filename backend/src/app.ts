@@ -13,6 +13,7 @@ import reportRoutes from "./routes/reports.js";
 import paymentRoutes from "./routes/payments.js";
 import settingRoutes from "./routes/settings.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import { runAutoLeave } from "./jobs/autoleave.js";
 
 export function createApp() {
   const app = express();
@@ -20,6 +21,23 @@ export function createApp() {
   app.use(express.json());
 
   app.get("/api/health", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+  app.get("/api/cron/autoleave", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (secret) {
+      const auth = req.headers.authorization || "";
+      if (auth !== `Bearer ${secret}`) {
+        return res.status(401).json({ error: "unauthorized" });
+      }
+    }
+    try {
+      const created = await runAutoLeave();
+      res.json({ ok: true, created });
+    } catch (e) {
+      console.error("[cron/autoleave] error:", e);
+      res.status(500).json({ ok: false, error: "gagal menjalankan auto-leave" });
+    }
+  });
 
   app.use("/api/auth", authRoutes);
   app.use("/api/users", userRoutes);
