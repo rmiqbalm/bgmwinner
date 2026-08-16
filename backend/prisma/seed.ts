@@ -4,6 +4,12 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0) {
+    console.log("Database sudah berisi data, seed dilewati.");
+    return;
+  }
+
   console.log("Seeding database...");
 
   const adminPassword = await bcrypt.hash("admin123", 10);

@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
@@ -30,6 +32,15 @@ export function createApp() {
   app.use("/api/payments", paymentRoutes);
   app.use("/api/settings", settingRoutes);
   app.use("/api/dashboard", dashboardRoutes);
+
+  const distDir = path.join(process.cwd(), "../frontend/dist");
+  if (fs.existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.get("*", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(distDir, "index.html"));
+    });
+  }
 
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(err);
