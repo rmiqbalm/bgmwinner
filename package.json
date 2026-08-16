@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "npm run setup:backend && npm run seed && npm run build:frontend && npm run start:backend",
+    "start": "npm run setup:backend && npm run seed && npm run start:backend",
     "setup:backend": "cd backend && (test -f .env || cp .env.example .env) && npm install && npx prisma generate && npx prisma db push --accept-data-loss",
     "seed": "cd backend && npx tsx prisma/seed.ts",
     "build:frontend": "cd frontend && npm install && npm run build",
